@@ -43,11 +43,13 @@ module.exports = function (keys, el, ground, worldHeight) {
     var depth = Math.ceil(n/2);
     var start = x - Math.floor(n/2);
     var end = start + n - 1;
+    var amt;
     for (var i=start; i<=end; i++) {
       if (this.ground[i]) {
         if (this.ground[i] > 0) {
-          if (i < 3650 || i > 3800) {
-            this.ground[i] += depth - (Math.abs(x - i));
+          if (i < 3650 || i > 3800) { // leave home base intact
+            amt = (Math.cos(Math.PI * (x-i)/Math.floor(n/2))/2 + 0.5);
+            this.ground[i] += depth * amt / 2;
             if (this.ground[i] > this.height) {
                 this.ground[i] = this.height;
             }
@@ -66,9 +68,7 @@ module.exports = function (keys, el, ground, worldHeight) {
     var offsetX = posX - Math.floor(vw/2);
     var offsetY = posY - Math.floor(vh/2);
     
-    ctx.fillStyle = '#584';
-    ctx.strokeStyle = '#453';
-    ctx.lineWidth = 4;
+    ctx.fillStyle = '#75b465';
 
     ctx.beginPath();
     ctx.clearRect(0, 0, vw, vh);
@@ -98,12 +98,10 @@ module.exports = function (keys, el, ground, worldHeight) {
     ctx.lineTo(lastX, vh-1);
     ctx.lineTo(0, vh-1);
     ctx.lineTo(firstX, vh -1);
-    ctx.stroke()
     ctx.fill();
 
     for (i=this.entities.length-1; i>=0; i--) {
       ctx.save();
-      ctx.lineWidth = 2;
       ctx.translate(this.entities[i].x - offsetX, this.entities[i].y - offsetY);
       ctx.rotate(this.entities[i].r);
       this.entities[i].draw(ctx);
@@ -138,14 +136,11 @@ module.exports = function Bomb (world, x, y, v, r) {
   this.r = 0;
 
   this.draw = function (ctx) {
-    ctx.fillStyle = '#555';
-    ctx.strokeStyle = '#444';
-    ctx.lineWidth = 4;
+    ctx.fillStyle = '#9aa';
     ctx.beginPath();
     ctx.arc(0, 0, 6, 0, Math.PI*2, true);
     ctx.closePath();
     ctx.fill();
-    ctx.stroke();
   };
 
   this.update = function (dur) {
@@ -161,14 +156,14 @@ module.exports = function Bomb (world, x, y, v, r) {
     }
 
     if (world.ground[Math.floor(this.x)] < this.y) {
-      world.depress(this.x, 80);
+      world.depress(this.x, 60 * Math.random() + 30);
       world.remove(this);
       world.add(new Smoke(world, this.x, this.y - 10, 30));
     }
   };
 
   this.contains = function (x, y) {
-    return Math.sqrt(Math.pow(this.x-x, 2) + Math.pow(this.y-y, 2)) < 10;
+    return Math.sqrt(Math.pow(this.x-x, 2) + Math.pow(this.y-y, 2)) < 7;
   };
 
   this.hit = function (n) {
@@ -192,7 +187,7 @@ module.exports = function Bullet (world, x, y, v, r) {
   var vy = vec.y;
   
   this.draw = function (ctx) {
-    ctx.fillStyle = '#999';
+    ctx.fillStyle = '#bbb';
     ctx.beginPath();
     ctx.scale(2,1);
     ctx.arc(0, 0, 3, 0, Math.PI*2, true);
@@ -236,11 +231,11 @@ var vectors = require('./vectors');
 module.exports = function Bunker (world, x) {
   this.collides = true;
   this.x = x;
-  this.y = world.ground[x] - 21;
+  this.y = world.ground[x] - 10;
   this.r = 0;
 
   var w = 50;
-  var h = 40;
+  var h = 30;
 
   var alive = true;
 
@@ -269,11 +264,8 @@ module.exports = function Bunker (world, x) {
   };
 
   this.draw = function (ctx) {
-    ctx.lineWidth = 2;
-    ctx.fillStyle = '#666';
-    ctx.strokeStyle = '#444';
+    ctx.fillStyle = '#597698';
     ctx.fillRect(-w/2, -h/2, w, h);
-    ctx.strokeRect(-w/2, -h/2, w, h);
   };
 
   this.contains = function (x, y) {
@@ -351,47 +343,43 @@ module.exports = function Plane (world, x, y) {
   this.draw = function (ctx) {
     if (inverted) ctx.scale(1, -1);
 
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 1.3;
 
     // gear linkage
+    ctx.strokeStyle = '#99c';
     ctx.beginPath();
     ctx.moveTo(0, 0);
     ctx.lineTo(width/3, height/1.4);
-    ctx.lineTo(width/2, height/6);
+    ctx.lineTo(width/2.25, height/6);
     ctx.stroke();
 
     // wing linkage
+    ctx.strokeStyle = '#99c';
     ctx.beginPath();
-    ctx.moveTo(width/4, 0);
-    ctx.lineTo(width/4, -height/2.5);
+    ctx.moveTo(width/4.5, 0);
+    ctx.lineTo(width/4.5, -height/2.5);
     ctx.moveTo(width/2.8, 0);
-    ctx.lineTo(width/2.5, -height/2.5);
+    ctx.lineTo(width/2.6, -height/2.5);
     ctx.stroke();
-
-    ctx.strokeStyle = '#222';
 
     // gear
     ctx.beginPath();
     ctx.arc(width/3, height/1.4, 4, 0, Math.PI*2, true);
     ctx.closePath();
-    ctx.fillStyle = '#555';
+    ctx.fillStyle = '#666';
     ctx.fill();
-    ctx.stroke();
 
-    ctx.fillStyle = '#c21';
-    ctx.strokeStyle = '#610';
+    ctx.fillStyle = '#ef333c';
 
     // wing
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(width/8, -height/2.5);
+    ctx.moveTo(width/8, -height/2.8);
     ctx.lineTo(width/2.2, -height/2.5);
-    ctx.lineTo(width/2.2, -height/1.7);
+    ctx.lineTo(width/2.2, -height/1.6);
     ctx.lineTo(width/8, -height/2);
     ctx.closePath();
     ctx.fill();
-    ctx.stroke();
 
     // fuselage
     ctx.lineWidth = 2;
@@ -407,7 +395,6 @@ module.exports = function Plane (world, x, y) {
     ctx.lineTo(-width/2.5, height/3);
     ctx.closePath();
     ctx.fill();
-    ctx.stroke();
   };
 
   this.handleInput = function (dur) {
@@ -429,7 +416,7 @@ module.exports = function Plane (world, x, y) {
         mayBomb = false;
         var bombRelativePos = vectors.rotate({
           x: 0,
-          y: 2 * height * (inverted ? -1 : 1)  + height * this.v
+          y: 1.5 * height * (inverted ? -1 : 1)  + height * this.v
         }, this.r);
 
         var bombVec = vectors.rotate({x: this.v, y: 0}, this.r);
@@ -439,15 +426,15 @@ module.exports = function Plane (world, x, y) {
         world.add(bomb);
         setTimeout(function () {
           mayBomb = true;
-        }, 300);
+        }, 200);
       }
     }
 
-    if (world.keys.isDown('J')) {
-      this.v = Math.min(this.v + (dur / 1000), 5);
+    if (world.keys.isDown('N')) {
+      this.v = Math.min(this.v + (dur / 1000), 1);
       if (maySmoke) {
         maySmoke = false;
-        world.add(new Smoke(world, this.x, this.y, 8));
+        world.add(new Smoke(world, this.x, this.y, 12, [255, 255, 255]));
         setTimeout(function () {
           maySmoke = true;
         }, 50);
@@ -523,7 +510,7 @@ module.exports = function Plane (world, x, y) {
 
     // limit velocity unless the jet is firing
 
-    if (!world.keys.isDown('J')) {
+    if (!world.keys.isDown('N')) {
       this.v = Math.min(0.4, this.v);
     }
 
@@ -565,7 +552,7 @@ module.exports = function Plane (world, x, y) {
       var p = vectors.add({x: this.x, y: this.y}, localPs[i]);
       groundY = world.ground[Math.floor(p.x)];
       if (p.y > groundY) {
-        collisionOffset = Math.min(collisionOffset, groundY - p.y);
+        collisionOffset = Math.min(collisionOffset, groundY - p.y + 2);
         if (i < 4 || !alive) { // don't crash on gear collision if the plane is still alive
           if (!crashed) {
             crashed = true;
@@ -596,6 +583,17 @@ module.exports = function Plane (world, x, y) {
       // nose down when going too slow in the air
       if (this.v < 0.1) {
         noseDown(dur, 1000);
+      }
+    }
+
+    // smoke when dead
+    if (!alive) {
+      if (maySmoke) {
+        maySmoke = false;
+        world.add(new Smoke(world, this.x, this.y, 12, [224, 224, 224]));
+        setTimeout(function () {
+          maySmoke = true;
+        }, 100);
       }
     }
 
@@ -633,20 +631,22 @@ module.exports = function Plane (world, x, y) {
   };
 
   this.hit = function (n) {
-    world.add(new Smoke(world, this.x, this.y, n));
+    world.add(new Smoke(world, this.x, this.y, n, [255, 224, 224]));
     alive = false;
   };
 };
 
 },{"./Bomb":2,"./Bullet":3,"./Smoke":6,"./vectors":8}],6:[function(require,module,exports){
-module.exports = function Smoke (world, x, y, size) {
+module.exports = function Smoke (world, x, y, size, rgb) {
   this.r = 0;
   this.x = x;
   this.y = y;
+  this.rgb = rgb || [ 224, 255, 255 ];
+
   this.collides = false;
   var that = this;
 
-  var alpha = 0.4;
+  var alpha = 0.3;
 
   this.update = function (dur) {
     alpha -= dur / 2000;
@@ -657,7 +657,7 @@ module.exports = function Smoke (world, x, y, size) {
 
   this.draw = function (ctx) {
     ctx.beginPath();
-    ctx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
+    ctx.fillStyle = 'rgba(' + this.rgb[0] + ',' + this.rgb[1] + ',' + this.rgb[2] + ',' + alpha + ')'; // 255,255,255,' + alpha + ')';
     ctx.arc(0, 0, size, 0, Math.PI*2);
     ctx.closePath();
     ctx.fill();
@@ -713,7 +713,7 @@ container.style.position = 'relative';
 var canvas = document.createElement('canvas');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-canvas.style.background = '#bdf';
+canvas.style.background = '#d0f8ff';
 container.appendChild(canvas);
 
 var world = new World(keys, canvas, ground, worldHeight);
@@ -749,16 +749,15 @@ for (var i=0; i<locs.length; i++)  {
 var guide = document.createElement('div');
 guide.style.position = 'absolute';
 guide.style.top = 0;
-guide.style.right = '20px';
-guide.style.color = '#444';
-guide.innerHTML = '<h3>Controls</h3><dl>' +
-  '<dt>X</dt><dd>Accelerate</dd>' +
-  '<dt>Left</dt><dd>Nose up</dd>' +
-  '<dt>Right</dt><dd>Nose down</dd>' +
-  '<dt>Up</dt><dd>Invert</dd>' +
-  '<dt>Space</dt><dd>Shoot</dd>' +
-  '<dt>B</dt><dd>Bomb</dd>' +
-  '<dt>J</dt><dd>Jet</dd>' +
+guide.style.right = 0;
+guide.innerHTML = '<dl>' +
+  '<dt>X</dt><dd>thrust</dd>' +
+  '<dt>N</dt><dd>nitrous</dd>' +
+  '<dt>B</dt><dd>bomb</dd>' +
+  '<dt>space</dt><dd>gun</dd>' +
+  '<dt>left</dt><dd>pitch up</dd>' +
+  '<dt>right</dt><dd>pitch down</dd>' +
+  '<dt>up</dt><dd>invert</dd>' +
   '</dl>';
 
 var lastTs = null;
@@ -788,6 +787,8 @@ module.exports = function (document) {
     DOWN: 40,
     J: 74,
     B: 66,
+    N: 78,
+    V: 86,
     X: 88,
     Y: 89,
     Z: 90,
